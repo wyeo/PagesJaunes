@@ -46,16 +46,11 @@ const chromeOptions = {
     console.log(await page.evaluate(() => document.getElementById('SEL-compteur').textContent));
     
     businesses = await page.evaluate(async (businesses, currentPage) => {
-      const tels = [];
-
-      Object.values(document.getElementsByClassName('num')).forEach((num) => {
-        tels.push(num.textContent || 'Pas communiqué');
-      });
       Object.values(document.getElementsByClassName('bi-bloc blocs')).forEach((business, index) => {
         const title = document.querySelector(`#${business.id} > div > header > div > div > h3 > a.denomination-links.pj-link`).textContent;
         const address = document.querySelector(`#${business.id} > div > header > div > div > a`).textContent;
         const prestations = document.querySelector(`#bi-desc-${business.id.split('-')[2].split(' ')[0]} > div.zone-cvi-cviv > p.cviv.cris`);
-        const tel = tels[index] || ' ';
+        const tel = document.querySelector(`#${business.id} > div > footer > ul.main-contact-container > li > div > div > strong`).textContent;
     
         let website = '';
         try {
@@ -79,13 +74,17 @@ const chromeOptions = {
           Nom: title.replace(/[\n]/g, ' '),
           Adresse: address.replace(/[\n]/g, ' '),
           Prestations: prestations && prestations.textContent.replace(/[\n]/g, ' ') || ' ',
-          Tel: tel.replace(/[\n]/g, ' '),
+          Tel: tel && tel.replace(/[\n]/g, ' ') || ' ',
           Website: website.replace(/[\n]/g, ' '),
           page: currentPage,
         });
       });
 
-      businesses.pageUrl = `https://www.pagesjaunes.fr` + atob(JSON.parse(document.getElementsByClassName('link_pagination next pj-lb pj-link')[0].getAttribute('data-pjlb')).url);
+      try {
+        businesses.pageUrl = `https://www.pagesjaunes.fr` + atob(JSON.parse(document.getElementsByClassName('link_pagination next pj-lb pj-link')[0].getAttribute('data-pjlb')).url);
+      } catch {
+        businesses.pageUrl = `https://www.pagesjaunes.fr`;
+      }
       return businesses;
     }, businesses, currentPage);
 
