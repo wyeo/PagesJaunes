@@ -50,9 +50,16 @@ const chromeOptions = {
         const title = document.querySelector(`#${business.id} > div > header > div > div > h3 > a.denomination-links.pj-link`).textContent;
         const address = document.querySelector(`#${business.id} > div > header > div > div > a`).textContent;
         let prestations = document.querySelector(`#bi-desc-${business.id.split('-')[2].split(' ')[0]} > div.zone-cvi-cviv > p.cviv.cris`);
-        let tel = document.querySelector(`#${business.id} > div > footer > ul.main-contact-container > li > div > div > strong`);
-        
-        tel === null && ( tel = ' ' );
+        // let tel = document.querySelector(`#${business.id} > div > footer > ul.main-contact-container > li > div > div > strong`);
+        let telContent = document.querySelector(`#${business.id} > div > footer > ul.main-contact-container > li > div`).children;
+        let tel = '';
+        if (telContent) {
+          Object.values(telContent).forEach((div) => {
+            tel += div.textContent;
+          });
+        } else {
+          tel = ' ';
+        }
         prestations === null && ( prestations = ' ' );
     
         let website = '';
@@ -77,7 +84,7 @@ const chromeOptions = {
           Nom: title.replace(/[\n]/g, ' '),
           Adresse: address.replace(/[\n]/g, ' '),
           Prestations: prestations !== ' ' && prestations.textContent.replace(/[\n]/g, ' ') || ' ',
-          Tel: tel !== ' ' && tel.textContent.replace(/[\n]/g, ' ') || ' ',
+          Tel: tel !== ' ' && tel.replace(/[\n]/g, ' ') || ' ',
           Website: website.replace(/[\n]/g, ' '),
         });
       });
