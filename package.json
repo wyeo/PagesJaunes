@@ -1,0 +1,17 @@
+{
+  "name": "pagesjaunes",
+  "version": "1.0.0",
+  "description": "A scapper for Pages Jaunes",
+  "main": "pagesJaunes.js",
+  "scripts": {
+    "start": "node pagesJaunes.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "objects-to-csv": "^1.3.6",
+    "prompt-async": "^0.9.9",
+    "puppeteer-core": "^5.2.1"
+  }
+}
