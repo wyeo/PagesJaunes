@@ -43,7 +43,7 @@ const chromeOptions = {
   };
   while (currentPage <= pageToScrap) {
     // Indicate Page
-    console.log(await page.evaluate(() => document.getElementById('SEL-compteur').textContent.split('/')[0] + ` / ${pageToScrap}`));
+    console.log(await page.evaluate((pageToScrap) => document.getElementById('SEL-compteur').textContent.split('/')[0] + ` / ${pageToScrap}`, pageToScrap));
     
     businesses = await page.evaluate(async (businesses) => {
       Object.values(document.getElementsByClassName('bi-bloc blocs')).forEach((business) => {
