@@ -18,7 +18,7 @@ const chromeOptions = {
   console.log("--- Connexion à l'url spécifié ---");
   await page.goto(pageURL);
 
-  const confirmHuman = await prompt.get(["Confirmez que vous êtes humain, puis appuyez sur une touche. Si il n'y a pas besoin, appuyez sur une touche"]);
+  await prompt.get(["Confirmez que vous êtes humain, puis appuyez sur une touche. Si il n'y a pas besoin, appuyez sur une touche"]);
 
   // AGREE TERMS OF SERVICES
   console.log("--- Confirmation de la popup 'Terms of Services' ---");
@@ -46,13 +46,13 @@ const chromeOptions = {
     console.log(await page.evaluate((pageToScrap) => document.getElementById('SEL-compteur').textContent.split('/')[0] + ` / ${pageToScrap}`, pageToScrap));
     
     businesses = await page.evaluate(async (businesses) => {
-      Object.values(document.getElementsByClassName('bi-bloc blocs')).forEach((business) => {
+      Object.values(document.getElementsByClassName('bi-bloc blocs')).forEach(async (business) => {
         const title = document.querySelector(`#${business.id} > div > header > div > div > h3 > a.denomination-links.pj-link`).textContent;
         const address = document.querySelector(`#${business.id} > div > header > div > div > a`).textContent;
         let prestations = document.querySelector(`#bi-desc-${business.id.split('-')[2].split(' ')[0]} > div.zone-cvi-cviv > p.cviv.cris`);
-        // let tel = document.querySelector(`#${business.id} > div > footer > ul.main-contact-container > li > div > div > strong`);
         let telContent = document.querySelector(`#${business.id} > div > footer > ul.main-contact-container > li > div`).children;
         let tel = '';
+        let website = '';
         if (telContent) {
           Object.values(telContent).forEach((div) => {
             tel += div.textContent;
@@ -60,9 +60,7 @@ const chromeOptions = {
         } else {
           tel = ' ';
         }
-        prestations === null && ( prestations = ' ' );
-    
-        let website = '';
+        prestations === null && ( prestations = ' ' );        
         try {
           website = JSON.parse(document.querySelector(
             `#bi-contact-${business.id.split('-')[2].split(' ')[0]} > ul.barre-liens-contact > li.item.hidden-phone.site-internet.SEL-internet > a`
@@ -79,7 +77,7 @@ const chromeOptions = {
             });
           }
         }
-    
+
         businesses.businessList.push({
           Nom: title.replace(/[\n]/g, ' '),
           Adresse: address.replace(/[\n]/g, ' '),
@@ -99,6 +97,60 @@ const chromeOptions = {
 
     await page.goto(businesses.pageUrl);
     currentPage += 1;
+  }
+
+  // GET SOCIETE INFOS
+  console.log("Souhaitez vous récupérer le nom des gérants des restaurants trouvés ? *** LONG ! ***");
+  console.log("(Laissez vide si vous ne voulez pas )");
+  const { confirm }  = await prompt.get(['confirm']);
+
+  if (confirm.length) {
+    console.log("--- Récupération des informations sur la société ---");
+  
+    for (let business of businesses.businessList) {
+      console.log(`- ${business.Nom}`);
+  
+      await page.goto(`https://www.societe.com/cgi-bin/search?champs=${business.Nom.trim().replace(/ /g, '+')}`);
+      business.link = await page.evaluate(async (business) => {
+        const divs = Object.values(document.querySelector('div#search').children);
+        for (let child of divs) {
+          if (child.className === 'Card frame') {
+            const _childs = Object.values(child.children);
+            for (let _child of _childs) {
+              if (_child.className === 'txt-no-underline') {
+                const departement = business.Adresse.split(', ')[1];
+                if (_child.textContent.replace(/\n/g, '').includes(departement)) {
+                  return ('https://www.societe.com' + _child.getAttribute('href'));
+                }
+              }
+            }
+          }
+        }
+        return null;
+      }, business);
+    }
+  
+    console.log("--- Finalisation... ---");
+    for (let business of businesses.businessList) {
+      if (business.link === null) {
+        delete business.link;
+        business.boss = ' ';
+        continue;
+      }
+  
+      await page.goto(business.link);
+      const boss = await page.evaluate(() => {
+        try {
+          const content = document.querySelector('#tabledir > div > table > tbody > tr').textContent.replaceAll('\n', '').replaceAll('\t', ' ').replace('En savoir plus', '');
+          return Array.from(new Set(content.split(' '))).toString(' ').replaceAll(',', ' ');
+        }
+        catch {
+          return ' ';
+        }
+      });
+      delete business.link;
+      business.boss = boss;
+    }
   }
 
   // EXPORT CSV
