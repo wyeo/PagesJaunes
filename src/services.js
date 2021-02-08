@@ -95,7 +95,7 @@ async function getPagesInformations(businesses, page, numberAsked) {
 };
 
 async function getCompanyBossName(businesses, page) {
-  console.log("Souhaitez vous récupérer le nom des gérants des restaurants trouvés ? *** LONG ! ***");
+  console.log("Souhaitez vous récupérer le nom des gérants des établissements trouvés ? *** LONG ! ***");
   console.log("(Laissez vide si vous ne voulez pas )");
   const { confirm }  = await prompt.get(['confirm']);
 
